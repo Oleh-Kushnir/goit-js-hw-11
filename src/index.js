@@ -14,6 +14,93 @@ const lightbox = new simpleLightbox('.gallery a', {
   captionDelay: 250,
 });
 
+// var el=document.querySelector('.header');
+// if(el.animate){
+//   el.animate([{color:'#005432'},{color:'#ef6789'}],{duration: 3000, iterations: Infinity});
+// }else alert('Ваш браузер не підтримує animate');
 
-var el=document.getElementById('test3');
-el.animate([{backgroundColor:'#ffffff'},{backgroundColor:'#E6E6FA'},{backgroundColor:'#778899'},{backgroundColor:'#6495ED'},{backgroundColor:'#4682B4'},{backgroundColor:'#66CDAA'},{backgroundColor:'#7CFC00'},{backgroundColor:'#32CD32'},{backgroundColor:'#EEDD82'}],{duration:10000, iterations:Infinity,});
+lightbox.on('show.simplelightbox');
+const fetching = new Fetch();
+const onSearch = e => {
+  e.preventDefault();
+  refs.gallery.innerHTML = '';
+  fetching.query = e.currentTarget.elements[0].value.trim();
+  fetching.page = 1;
+  fetchImagesFunc();
+  refs.loadMoreBtn.classList.remove('is-hidden');
+};
+
+const createMArkup = data => {
+  return data
+    .map(el => {
+      const {
+        webformatURL,
+        largeImageURL,
+        tags,
+        likes,
+        views,
+        comments,
+        downloads,
+      } = el;
+      return `
+      <a class="photo-card__link" href="${largeImageURL}"><div class="photo-card">
+  <img class="photo-card__image" src="${webformatURL}" alt="${tags}" loading="lazy"/>
+  <div class="info">
+    <p class="info-item">
+      <b>Likes</b>
+      ${likes}
+    </p>
+    <p class="info-item">
+      <b>Views</b>
+      ${views}
+    </p>
+    <p class="info-item">
+      <b>Comments</b>
+      ${comments}
+    </p>
+    <p class="info-item">
+      <b>Downloads</b>
+      ${downloads}
+    </p>
+  </div>
+</div>
+</a>`;
+    })
+    .join('');
+};
+const addMArkup = arr => {
+  refs.gallery.insertAdjacentHTML('beforeend', arr);
+};
+const pageScroll = () => {
+  const { height: cardHeight } =
+    refs.gallery.firstElementChild.getBoundingClientRect();
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
+};
+
+const fetchImagesFunc = async () => {
+  try {
+    const images = await fetching.fetchImages();
+    if (images.totalHits === 0) {
+      refs.loadMoreBtn.classList.add('is-hidden');
+      Notify.failure(
+        `Sorry, there are no images matching your search query. Please try again.`
+      );
+      return;
+    }
+    const { hits, totalHits } = images;
+    addMArkup(createMArkup(hits));
+    pageScroll();
+    lightbox.refresh();
+    Notify.success(`Hooray! We found ${totalHits} images.`);
+  } catch {
+    Notify.failure(
+      `Sorry, there are no images matching your search query. Please try again.`
+    );
+  }
+};
+
+refs.form.addEventListener('submit', onSearch);
+refs.loadMoreBtn.addEventListener('click', fetchImagesFunc);
