@@ -41,8 +41,8 @@ function onSearch(e) {
 
 async function getImages() {
   loadMoreBtn.disable();
-  const images = await pixabyApiService.fetchImages();
   try {
+    const images = await pixabyApiService.fetchImages();
     const hits = images.hits;
     const totalHits = images.totalHits;
 
