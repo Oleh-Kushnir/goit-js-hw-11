@@ -1,33 +1,43 @@
 import axios from 'axios';
-import { Notify } from 'notiflix';
 
-export class Fetch {
+const API_KEY = '34339097-c9f7f7c632c3a534fa2bb6c6d';
+
+export default class PixabyApiService {
   constructor() {
-    this.baseURL = 'https://pixabay.com/api/';
-    this.key = '34448080-08ea3992a6669e170b3456efa';
-    this.query = '';
+    this.searchQuery = '';
     this.page = 1;
-    this.prePage = 40;
+    this.perPage = 40;
   }
 
   async fetchImages() {
     try {
-      const response = await axios.get(
-        `https://pixabay.com/api/?key=${this.key}&q=${this.query}&image_type=photo&orientation=horizontal&safesearch=true&page=${this.page}&per_page=40`
-      );
-      this.page += 1;
-      return response.data;
+      const url = `https://pixabay.com/api/?key=${API_KEY}&q=${this.searchQuery}&image_type=photo&orientation=horizontal&safesearch=true&per_page=40&page=${this.page}`;
+      const response = await axios.get(url);
+      const images = response.data;
+      this.incrementPage();
+      return images;
     } catch (error) {
-      Notify.failure(
-        `Sorry, there are no images matching your search query. Please try again.`
-      );
+      console.error(error);
     }
+  }
+
+  incrementPage() {
+    this.page += 1;
+  }
+
+  resetPage() {
+    this.page = 1;
   }
 
   get query() {
     return this.searchQuery;
   }
+
   set query(newQuery) {
     this.searchQuery = newQuery;
+  }
+
+  get imageQty() {
+    return (this.page - 1) * this.perPage;
   }
 }
