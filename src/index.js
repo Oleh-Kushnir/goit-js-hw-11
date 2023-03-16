@@ -14,21 +14,24 @@ const lightbox = new simpleLightbox('.gallery a', {
   captionDelay: 250,
 });
 
-// var el=document.querySelector('.header');
-// if(el.animate){
-//   el.animate([{color:'#005432'},{color:'#ef6789'}],{duration: 3000, iterations: Infinity});
-// }else alert('Ваш браузер не підтримує animate');
 
 lightbox.on('show.simplelightbox');
 const fetching = new Fetch();
 const onSearch = e => {
   e.preventDefault();
+  window.scrollTo({ top: 0 });
   refs.gallery.innerHTML = '';
   fetching.query = e.currentTarget.elements[0].value.trim();
   fetching.page = 1;
+  refs.loadMoreBtn.classList.add('is-hidden');
+
+  if (fetching.query === '') {
+    alertNoEmptySearch();
+    return;
+  };
+  
   fetchImagesFunc();
-  refs.loadMoreBtn.classList.remove('is-hidden');
-};
+}
 
 const createMArkup = data => {
   return data
@@ -84,7 +87,7 @@ const fetchImagesFunc = async () => {
   try {
     const images = await fetching.fetchImages();
     if (images.totalHits === 0) {
-      refs.loadMoreBtn.classList.add('is-hidden');
+      refs.loadMoreBtn.classList.remove('is-hidden');
       Notify.failure(
         `Sorry, there are no images matching your search query. Please try again.`
       );
@@ -101,6 +104,10 @@ const fetchImagesFunc = async () => {
     );
   }
 };
+  
+function alertNoEmptySearch() {
+  Notiflix.Notify.failure('The search string cannot be empty. Please specify your search query.');
+}
 
 refs.form.addEventListener('submit', onSearch);
 refs.loadMoreBtn.addEventListener('click', fetchImagesFunc);
