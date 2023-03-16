@@ -2,11 +2,20 @@ import { Notify } from 'notiflix';
 import simpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import { Fetch } from './js/fetch';
+import { onScroll, onToTopBtn } from './js/scroll';
+
 const refs = {
   gallery: document.querySelector('.gallery'),
   form: document.querySelector('#search-form'),
   loadMoreBtn: document.querySelector('.btn-load'),
 };
+
+refs.form.addEventListener('submit', onSearch);
+refs.loadMoreBtn.addEventListener('click', fetchImagesFunc);
+
+onScroll();
+onToTopBtn();
+
 const lightbox = new simpleLightbox('.gallery a', {
   captions: true,
   captionPosition: 'bottom',
@@ -19,19 +28,12 @@ lightbox.on('show.simplelightbox');
 const fetching = new Fetch();
 const onSearch = e => {
   e.preventDefault();
-  window.scrollTo({ top: 0 });
   refs.gallery.innerHTML = '';
   fetching.query = e.currentTarget.elements[0].value.trim();
   fetching.page = 1;
-  refs.loadMoreBtn.classList.add('is-hidden');
-
-  if (fetching.query === '') {
-    alertNoEmptySearch();
-    return;
-  };
-  
   fetchImagesFunc();
-}
+  refs.loadMoreBtn.classList.remove('is-hidden');
+};
 
 const createMArkup = data => {
   return data
@@ -87,7 +89,7 @@ const fetchImagesFunc = async () => {
   try {
     const images = await fetching.fetchImages();
     if (images.totalHits === 0) {
-      refs.loadMoreBtn.classList.remove('is-hidden');
+      refs.loadMoreBtn.classList.add('is-hidden');
       Notify.failure(
         `Sorry, there are no images matching your search query. Please try again.`
       );
@@ -104,10 +106,3 @@ const fetchImagesFunc = async () => {
     );
   }
 };
-  
-function alertNoEmptySearch() {
-  Notiflix.Notify.failure('The search string cannot be empty. Please specify your search query.');
-}
-
-refs.form.addEventListener('submit', onSearch);
-refs.loadMoreBtn.addEventListener('click', fetchImagesFunc);
